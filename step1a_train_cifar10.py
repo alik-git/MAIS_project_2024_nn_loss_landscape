@@ -14,6 +14,8 @@ from matplotlib import pyplot as plt
 from data_augment_cifar10 import enlarge_cifar10_dataset
 from HessianEigen_utils import *
 
+import wandb
+
 
 def get_validation(model, loss_fn, data_x, targets, top_k = 5):
 
@@ -50,6 +52,11 @@ if __name__ == "__main__":
     # data_test = torchvision.datasets.MNIST('../datasets/', train=False, download=True)
     data_train = torchvision.datasets.CIFAR10('../datasets/', train=True, download=True)
     data_test = torchvision.datasets.CIFAR10('../datasets/', train=False, download=True)
+    
+    wandb.init(project="concept-graphs2", 
+            #    entity="concept-graphs",
+                config={"lr": 0.9}
+               )
 
     # expand dataset with augmented images
     # data_x, data_y = enlarge_cifar10_dataset(data_train.data, data_train.targets, n_enlarge=5)
@@ -169,6 +176,8 @@ if __name__ == "__main__":
             print(f"i:{iter}/{n_iter} --- time remaining:{time_remaining:.1f}s --- loss:{plot_average.item():.7f} "
                   f"--- top-1:{last_accuracy[0]:.4f} top eigen: {local_top_eigvals[0].item():.6f}, expected: {2/lr:.3f}"
                   f" bottom eigen: {local_bottom_eigvals[0].item():.6f}")
+            wandb.log({"loss": plot_average.item(), "top-1": last_accuracy[0], "top_eigval": local_top_eigvals[0].item(),
+                       "bottom_eigval": local_bottom_eigvals[0].item()})
 
         # if iter%100 == 0:
         #     t.save(model.state_dict(), f'models/resnet9_cifar10/model_{iter}.pth')
@@ -223,4 +232,5 @@ if __name__ == "__main__":
     plt.plot(np.array(plot_iters[:-1]), np.array(plot_losses), color='b')
     plt.yscale('log')
     plt.savefig('./figures/small_resnet_cifar10_sgd_augmented_no_clip.png')
+    wandb.finish()
 
